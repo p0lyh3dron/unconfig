@@ -8,7 +8,6 @@ class Node
     public:
 
         unsigned int size;
-        bool hasChildren;
 
         Pair* pair;
 };
@@ -21,6 +20,7 @@ union PairContent
 
 struct Pair
 {
+    bool isParent;
     char* label;
     union
     {
@@ -116,7 +116,7 @@ class Parsed
         Node parse_data
             (char* data, unsigned int& p, unsigned int size)
         {
-            Node newNode = {0, false, NULL};                                                //  Starting object. The magic begins.
+            Node newNode = {0, NULL};                                                       //  Starting object. The magic begins.
             unsigned int alloc = 1;                                                         //  Allocate one object. With the magic of realloc, we can start at 1.
             newNode.pair = (Pair* )calloc(alloc, sizeof(Pair));                             //  Allocate those pointers.
             skip_to_value(data, p);                                                         //  Skips whitespace.
@@ -140,12 +140,13 @@ class Parsed
                 {
                     pair.next = parse_data(data, ++p, size);                                //  Recurse.
                     newNode.pair[newNode.size].next = pair.next;                            
-                    newNode.hasChildren = true;                                             //  This is to help with printing the structure later.
+                    newNode.pair[newNode.size].isParent = true;                             //  This is to help with printing the structure later.
                 }
                 else
                 {
                     pair.value = parse_string(data, p);                                     //  Boring value, not poggers.
                     newNode.pair[newNode.size].value = pair.value;
+                    newNode.pair[newNode.size].isParent = false;
                 }
 
                 newNode.pair[newNode.size].label = label;                                   //  Set our label.
@@ -158,9 +159,9 @@ class Parsed
         void print_dump
             (Node nodeStart, unsigned int iterations)
         {
-            if (nodeStart.hasChildren)
+            for (int i = 0; i < nodeStart.size; ++i)
             {
-                for (int i = 0; i < nodeStart.size; ++i)
+                if (nodeStart.pair[i].isParent)
                 {
                     for (int j = 0; j < iterations; ++j)
                         printf("\t");
@@ -174,10 +175,7 @@ class Parsed
                     printf("}\n");
                     --iterations;
                 }
-            }
-            else
-            {
-                for (int i = 0; i < nodeStart.size; ++i)
+                else
                 {
                     for (int j = 0; j < iterations; ++j)
                         printf("\t");
@@ -191,7 +189,7 @@ class Parsed
         {
             for (int i = 0; i < nodeStart.size; ++i)
             {
-                if (nodeStart.hasChildren)
+                if (nodeStart.pair[i].isParent)
                 {
                     free_parsed(nodeStart.pair[i].next);
                 }
@@ -209,7 +207,7 @@ class Parsed
             char* value = NULL;
             for (int i = 0; i < nodeStart.size; ++i)
             {
-                if (strcmp(nodeStart.pair[i].label, (char*)objectLabel) && nodeStart.hasChildren)
+                if (strcmp(nodeStart.pair[i].label, (char*)objectLabel) && nodeStart.pair[i].isParent)
                 {
                     for (int j = 0; j < nodeStart.pair[i].next.size; ++j)
                     {
@@ -219,7 +217,7 @@ class Parsed
                         }
                     }
                 }
-                else if (nodeStart.hasChildren)
+                else if (nodeStart.pair[i].isParent)
                 {
                     value = get_value_from_label_in_object(nodeStart.pair[i].next, objectLabel, itemLabel);
                     if (value)
