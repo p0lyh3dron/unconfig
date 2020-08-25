@@ -1,6 +1,12 @@
 #include <stdio.h>
 #include <malloc.h>
 
+/*
+
+    OBJECT DEFINITIONS
+
+*/
+
 struct Pair;
 
 struct Node
@@ -32,6 +38,12 @@ struct Parsed
     struct Node nodeHead;
 };
 
+/*
+
+    STRING FUNCTIONS
+
+*/
+
 unsigned int stringlen
     (char *str)
 {
@@ -59,6 +71,12 @@ char stringcmp
     }
     return 1;
 }
+
+/*
+
+    DATA PARSING FUNCTIONS
+
+*/
 
 void skip_to_value
     (char *data, unsigned int* p)
@@ -110,6 +128,12 @@ char *parse_string
     ++*p;                                                //  Increment the pointer after finishing.
     return string;
 }
+
+/*
+
+    FILE PARSING FUNCTIONS
+
+*/
 
 struct Node parse_data
     (char *data, unsigned int* p, unsigned int size)
@@ -180,7 +204,13 @@ struct Parsed parse
     return p;
 }
 
-void print_dump
+/*
+
+    INFORMATION HANDLING FUNCTIONS
+
+*/
+
+void print_dump_parsed
     (struct Node nodeStart, unsigned int iterations)
 {
     for (int i = 0; i < nodeStart.size; ++i)
@@ -193,7 +223,7 @@ void print_dump
             for (int j = 0; j < iterations; ++j)
                 printf("\t");
             printf("{\t//\t%i sub-items\n", nodeStart.size + 1);
-            print_dump(nodeStart.pair[i].next, ++iterations);
+            print_dump_parsed(nodeStart.pair[i].next, ++iterations);
             for (int j = 0; j < iterations - 1; ++j)
                 printf("\t");
             printf("}\n");
@@ -208,24 +238,11 @@ void print_dump
     }
 }
 
-void free_parsed_data
+void dump_parsed
     (struct Node nodeStart)
 {
-    for (int i = 0; i < nodeStart.size; ++i)
-    {
-        if (nodeStart.pair[i].isParent)
-        {
-            free_parsed_data(nodeStart.pair[i].next);
-        }
-    }
-    free(nodeStart.pair);
-}
-
-void free_parsed
-    (struct Parsed p)
-{
-    free_parsed_data(p.nodeHead);
-    free((void*)p.buffer);
+    unsigned int i = 0;
+    print_dump_parsed(nodeStart, i);
 }
 
 char *get_value_from_label_in_object
@@ -256,9 +273,49 @@ char *get_value_from_label_in_object
     return NULL;
 }
 
-void dump
+char does_object_exist
+    (struct Node nodeStart, char* objectLabel)
+{
+    for (int i = 0; i < nodeStart.size; ++i)
+    {
+        if (stringcmp(nodeStart.pair[i].label, (char *)objectLabel) && nodeStart.pair[i].isParent)
+        {
+            return 1;
+        }
+        else if (nodeStart.pair[i].isParent)
+        {
+            char ret = does_object_exist(nodeStart.pair[i].next, objectLabel);
+            if (ret)
+            {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+/*
+
+    MEMORY DISPOSAL FUNCTIONS
+
+*/
+
+void free_parsed_data
     (struct Node nodeStart)
 {
-    unsigned int i = 0;
-    print_dump(nodeStart, i);
+    for (int i = 0; i < nodeStart.size; ++i)
+    {
+        if (nodeStart.pair[i].isParent)
+        {
+            free_parsed_data(nodeStart.pair[i].next);
+        }
+    }
+    free(nodeStart.pair);
+}
+
+void free_parsed
+    (struct Parsed p)
+{
+    free_parsed_data(p.nodeHead);
+    free((void*)p.buffer);
 }

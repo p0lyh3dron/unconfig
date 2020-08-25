@@ -1,4 +1,4 @@
-#include "parser.h"
+#include "../include/parser.h"
 
 struct Node;
 struct Parsed;
@@ -8,7 +8,7 @@ int main
 {
     struct Parsed p;
 
-    p = parse("exampleconfig.cfg");
+    p = parse("bhop.cfg");
 
     printf("highest value is %s\n\n", get_value_from_label_in_object(p.nodeHead, "value information", "highest number")); //  Read the object in the object.
 
@@ -16,7 +16,10 @@ int main
     printf("b is %s\n", get_value_from_label_in_object(p.nodeHead, "values", "b"));   //  Find label b and get its value.
     printf("c is %s\n\n", get_value_from_label_in_object(p.nodeHead, "values", "c"));   //  Find label c and get its value.
 
-    dump(p.nodeHead);
+    printf("gmod existing = %i\n", does_object_exist(p.nodeHead, "gmod"));
+
+    dump_parsed(p.nodeHead);
+    free_parsed(p);
 
     return 0;
 }
